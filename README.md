@@ -1,13 +1,23 @@
-# Projet-BSD
-Utilisation
-Crypté : 
-python Cryptobox.py cesar chiffrer BONJOUR -k 3
-python Cryptobox.py cesar brute ERQMRXU
-python Cryptobox.py substitution chiffrer ATTAQUE -k QWERTYUIOPASDFGHJKLZXCVBNM
-python Cryptobox.py transposition chiffrer RENDEZVOUSAMIDI -k PORTE
-python Cryptobox.py test
+# Projet-BSD - CryptoBox
 
-décrypté :
-python Cryptobox.py cesar dechiffrer ERQMRXU -k 3
-python Cryptobox.py substitution dechiffrer QZZQJXT -k QWERTYUIOPASDFGHJKLZXCVBNM
-python Cryptobox.py transposition dechiffrer ESIEVMRZANOIDUD -k PORTE
+Outil en Python pour chiffrer et déchiffrer des messages (César, substitution, transposition), sans bibliothèque de cryptographie.
+
+Binôme : BOUDA Mohamed - MATAR Matar
+
+## Chiffrer
+
+```
+python CryptoBox.py cesar chiffrer BONJOUR -k 3
+python CryptoBox.py cesar brute ERQMRXU
+python CryptoBox.py substitution chiffrer ATTAQUE -k QWERTYUIOPASDFGHJKLZXCVBNM
+python CryptoBox.py transposition chiffrer RENDEZVOUSAMIDI -k PORTE
+python CryptoBox.py test
+```
+
+## Déchiffrer
+
+```
+python CryptoBox.py cesar dechiffrer ERQMRXU -k 3
+python CryptoBox.py substitution dechiffrer QZZQJXT -k QWERTYUIOPASDFGHJKLZXCVBNM
+python CryptoBox.py transposition dechiffrer ESIEVMRZANOIDUD -k PORTE
+```
