@@ -1,3 +1,9 @@
+#!/usr/bin/env python3
+"""CryptoBox - brique 1 : César, substitution, transposition par colonnes.
+
+Convention : lettres majuscules A-Z uniquement, sans espaces ni accents.
+Aucune bibliothèque de cryptographie n'est utilisée.
+"""
 import argparse
 import string
 
@@ -84,6 +90,60 @@ def transposition_dechiffrer(message, motcle):
     return "".join(colonnes[c][r] for r in range(lignes) for c in range(n))
 
 
+# ---------- Vigenère ----------
+ACCENTS = {"É": "E", "È": "E", "Ê": "E", "Ë": "E", "À": "A", "Â": "A",
+           "Ä": "A", "Î": "I", "Ï": "I", "Ô": "O", "Ö": "O", "Ù": "U",
+           "Û": "U", "Ü": "U", "Ç": "C"}
+
+
+def normaliser(texte):
+    """Majuscules, accents retirés ; espaces, chiffres et ponctuation conservés."""
+    return "".join(ACCENTS.get(c, c) for c in texte.upper())
+
+
+def vigenere(texte, cle, sens):
+    """sens=1 : chiffre, sens=-1 : déchiffre. La clé n'avance que sur les lettres."""
+    cle = nettoyer(cle)
+    if not cle:
+        raise ValueError("La clé doit contenir au moins une lettre.")
+    res, i = [], 0
+    for c in normaliser(texte):
+        if c in ALPHABET:
+            decalage = ALPHABET.index(cle[i % len(cle)])
+            res.append(ALPHABET[(ALPHABET.index(c) + sens * decalage) % 26])
+            i += 1
+        else:
+            res.append(c)
+    return "".join(res)
+
+
+def vigenere_chiffrer(texte, cle):
+    return vigenere(texte, cle, 1)
+
+
+def vigenere_dechiffrer(texte, cle):
+    return vigenere(texte, cle, -1)
+
+
+def lettre_la_plus_frequente(colonne):
+    comptes = {}
+    for c in colonne:
+        comptes[c] = comptes.get(c, 0) + 1
+    return max(sorted(comptes), key=lambda c: comptes[c])
+
+
+def vigenere_casser(texte, L):
+    """Retrouve la clé de longueur L : lettre la plus fréquente de chaque colonne = E."""
+    lettres = nettoyer(texte)
+    cle = ""
+    for j in range(L):
+        colonne = lettres[j::L]
+        freq = lettre_la_plus_frequente(colonne)
+        decalage = (ALPHABET.index(freq) - ALPHABET.index("E")) % 26
+        cle += ALPHABET[decalage]
+    return cle
+
+
 # ---------- Tests ----------
 def tests():
     assert cesar_chiffrer("BONJOUR", 3) == "ERQMRXU"
@@ -97,12 +157,17 @@ def tests():
     # Mot-clé à lettres répétées + remplissage par X
     m = transposition_chiffrer("BONJOUR", "ABBA")
     assert transposition_dechiffrer(m, "ABBA") == "BONJOURX"
+    # Vigenère
+    assert vigenere_chiffrer("ATTAQUE A L'AUBE", "CLE") == "CEXCBYG L P'CFFG"
+    assert vigenere_chiffrer("LA CLE, 14H", "TP") == "EP VAX, 14W"
+    assert vigenere_dechiffrer("CEXCBYG L P'CFFG", "CLE") == "ATTAQUE A L'AUBE"
+    assert vigenere_dechiffrer("EP VAX, 14W", "TP") == "LA CLE, 14H"
     print("Tous les tests sont OK.")
 
 
 # ---------- Interface terminal ----------
 def main():
-    p = argparse.ArgumentParser(description="CryptoBox - brique 1")
+    p = argparse.ArgumentParser(description="CryptoBox")
     sub = p.add_subparsers(dest="algo")
 
     c = sub.add_parser("cesar", help="chiffrement de César")
@@ -119,6 +184,13 @@ def main():
     t.add_argument("action", choices=["chiffrer", "dechiffrer"])
     t.add_argument("message")
     t.add_argument("-k", "--cle", required=True, help="mot-clé")
+
+    v = sub.add_parser("vigenere", help="Vigenère : chiffrer, déchiffrer, casser")
+    v.add_argument("action", choices=["chiffrer", "dechiffrer", "casser", "brute"])
+    v.add_argument("message", nargs="?", help="texte (ou utiliser -f)")
+    v.add_argument("-k", "--cle", help="clé (chiffrer/dechiffrer)")
+    v.add_argument("-L", "--longueur", type=int, help="longueur de la clé (casser)")
+    v.add_argument("-f", "--fichier", help="lire le texte dans un fichier")
 
     sub.add_parser("test", help="lance les tests")
     a = p.parse_args()
@@ -139,6 +211,30 @@ def main():
         elif a.algo == "transposition":
             f = transposition_chiffrer if a.action == "chiffrer" else transposition_dechiffrer
             print(f(a.message, a.cle))
+        elif a.algo == "vigenere":
+            if a.fichier:
+                with open(a.fichier, encoding="utf-8") as fh:
+                    texte = fh.read()
+            elif a.message:
+                texte = a.message
+            else:
+                p.error("donnez un message ou -f fichier")
+            if a.action in ("chiffrer", "dechiffrer"):
+                if not a.cle:
+                    p.error("-k est requis")
+                f = vigenere_chiffrer if a.action == "chiffrer" else vigenere_dechiffrer
+                print(f(texte, a.cle))
+            elif a.action == "casser":
+                if not a.longueur:
+                    p.error("-L est requis")
+                cle = vigenere_casser(texte, a.longueur)
+                print("Clé trouvée :", cle)
+                print(vigenere_dechiffrer(texte, cle)[:300])
+            else:  # brute : L = 2 à 10
+                for L in range(2, 11):
+                    cle = vigenere_casser(texte, L)
+                    apercu = vigenere_dechiffrer(texte, cle)[:60].replace("\n", " ")
+                    print(f"L={L:2d} clé={cle:<10} {apercu}")
         elif a.algo == "test":
             tests()
         else:
