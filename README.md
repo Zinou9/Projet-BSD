@@ -78,8 +78,4 @@ Mode `brute` : si L est inconnue, on appelle le casseur pour L = 2 à 10 et on l
 - `tests()` : vérifie tous les exemples des énoncés.
 - `main()` : interface en ligne de commande (`argparse`).
 
-## Limites
- 
-- Le casseur suppose un texte en français assez long.
-- Après déchiffrement d'une transposition, les `X` de remplissage restent à la fin.
  
